@@ -1,0 +1,70 @@
+#include"Header.h"
+ITK_user_main(int argc, char* argv[])
+{//Login Code
+	int ifail = 0;
+	int iCount_NewRev = 0;
+	int iCountDirect = 0;
+	int iCountText = 0;
+	int iCountJPEG = 0;
+
+	char* cError = NULL;
+	char* userID = NULL;
+	char* cPassword = NULL;
+	char* cGroup = NULL;
+	char* cItemid = NULL;
+	char* cItemName = NULL;
+	char* cprefValue = NULL;
+
+	int attachCount = 1;
+	int attach_types[1] = { EPM_target_attachment };
+
+	tag_t tItem = NULLTAG;
+	tag_t tRev = NULLTAG;
+	tag_t tProcessTemplate = NULLTAG;
+	tag_t tNewProcess = NULLTAG;
+
+	userID = ITK_ask_cli_argument("-u=");
+	cPassword = ITK_ask_cli_argument("-p=");
+	cGroup = ITK_ask_cli_argument("-g=");
+
+	if (ITK_ask_cli_argument("-h") || (ITK_ask_cli_argument("-help")))
+	{
+		display_usage();
+		return 0;
+	}
+
+	if (argc == 4)
+	{
+		if (userID || cPassword || cGroup != 0)
+		{
+			Report_error(ITK_init_module(userID, cPassword, cGroup));
+			Report_error(PREF_ask_char_value("BOM_top_node_id_for_release", 0, &cprefValue));
+			printf("\n Top node of BOM struture is: %s", cprefValue);
+
+			Report_error(ITEM_find_item(cprefValue, &tItem));
+			if (tItem != NULLTAG)
+			{
+				Report_error(WSOM_ask_name2(tItem, &cItemName));
+				printf("\n Item name is: %s",cItemName);
+				Report_error(ITEM_ask_latest_rev(tItem, &tRev));
+
+				Report_error(EPM_find_process_template("Release BOM structure and datasets", &tProcessTemplate));
+				printf("\n Process template found");
+				Report_error(EPM_create_process("BMW", "Intiated through ITK", tProcessTemplate, attachCount, &tRev, attach_types, &tNewProcess));
+				printf("\n WF initiated");
+			}
+
+			Report_error(ITK_exit_module(true));
+			printf("\n logout");
+		}
+		else
+		{
+			printf("\n Please provide correct Login credentials \n");
+		}
+	}
+	else
+	{
+		printf("\nThe Argument count is more or less \n");
+	}
+	return ifail;
+}
